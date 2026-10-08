@@ -157,7 +157,7 @@ class _ParticipantRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${formatMoney(participant.totalValue)} · ${participant.tradesCount} сделок',
+                  '${formatMoney(participant.totalValue)} · ${plural(participant.tradesCount, 'сделка', 'сделки', 'сделок')}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: textTheme.bodySmall?.copyWith(

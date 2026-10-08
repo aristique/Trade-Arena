@@ -17,16 +17,17 @@ class TickerAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    // Цвет фона выбирается по первой букве, чтобы соседние
-    // кружки отличались, но цвета всё равно берутся из темы.
-    final palette = [
-      (scheme.primaryContainer, scheme.onPrimaryContainer),
-      (scheme.secondaryContainer, scheme.onSecondaryContainer),
-      (scheme.tertiaryContainer, scheme.onTertiaryContainer),
-    ];
-    final (bg, fg) = highlighted
-        ? (scheme.primary, scheme.onPrimary)
-        : palette[label.codeUnitAt(0) % palette.length];
+    // Обычный кружок — нейтральный, выделенный — основного цвета темы
+    final bg = highlighted ? scheme.primary : scheme.surfaceContainerHighest;
+    final fg = highlighted ? scheme.onPrimary : scheme.onSurface;
+
+    final text = _shortLabel(label);
+    // Чем длиннее подпись, тем мельче шрифт, чтобы она влезла в круг
+    final fontScale = switch (text.length) {
+      <= 2 => 0.34,
+      3 => 0.27,
+      _ => 0.23,
+    };
 
     return Container(
       width: size,
@@ -34,20 +35,23 @@ class TickerAvatar extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
       child: Text(
-        _shortLabel(label),
+        text,
         style: TextStyle(
           color: fg,
           fontWeight: FontWeight.w700,
-          fontSize: size * 0.32,
+          fontSize: size * fontScale,
         ),
       ),
     );
   }
 
-  // "AAPL" -> "AA", "Мария Чебан" -> "МЧ"
+  // Тикер — до 4 букв ("HDFCBANK" -> "HDFC"), имя — инициалы ("Мария Чебан" -> "МЧ")
   static String _shortLabel(String text) {
     final words = text.trim().split(' ');
     if (words.length > 1) return (words[0][0] + words[1][0]).toUpperCase();
-    return text.length > 2 ? text.substring(0, 2) : text;
+    final isTicker = text == text.toUpperCase();
+    final length = isTicker ? 4 : 2;
+    final short = text.length > length ? text.substring(0, length) : text;
+    return short.toUpperCase();
   }
 }

@@ -45,7 +45,7 @@ class LoginScreen extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 'Торгуйте реальными акциями США, Индии и Европы '
-                'на виртуальные \$10 000 и соревнуйтесь с друзьями.',
+                'на виртуальные \$10 000 и соревнуйтесь с друзьями.',
                 style: textTheme.bodyLarge?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),

@@ -119,7 +119,7 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 SwitchListTile(
                   secondary: const Icon(Icons.notifications_outlined),
-                  title: const Text('Уведомления об ордерах'),
+                  title: const Text('Уведомления'),
                   value: true,
                   onChanged: (_) {},
                 ),
