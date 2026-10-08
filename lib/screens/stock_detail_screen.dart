@@ -9,6 +9,7 @@ import '../widgets/news_card.dart';
 import '../widgets/price_change_badge.dart';
 import '../widgets/stat_tile.dart';
 import '../widgets/ticker_avatar.dart';
+import 'order_screen.dart';
 
 // Форма графика за день: отклонения в % от плавного тренда.
 // Нужны только этому экрану, поэтому лежат здесь, а не в mock_data.
@@ -23,6 +24,15 @@ class StockDetailScreen extends StatelessWidget {
   const StockDetailScreen({super.key, required this.asset});
 
   final Asset asset;
+
+  void _openOrder(BuildContext context, OrderSide side) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OrderScreen(asset: asset, side: side),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -188,14 +198,14 @@ class StockDetailScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () => _openOrder(context, OrderSide.sell),
                   child: const Text('Продать'),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton(
-                  onPressed: () {},
+                  onPressed: () => _openOrder(context, OrderSide.buy),
                   child: const Text('Купить'),
                 ),
               ),
