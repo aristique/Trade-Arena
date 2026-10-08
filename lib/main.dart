@@ -17,9 +17,7 @@ class TradeArenaApp extends StatelessWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
-      home: const Scaffold(
-        body: Center(child: Text('TradeArena')),
-      ),
+      home: const Scaffold(body: Center(child: Text('TradeArena'))),
     );
   }
 }
