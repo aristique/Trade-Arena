@@ -18,6 +18,7 @@ class TradeArenaApp extends StatelessWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system, // светлая или тёмная — как в системе
+      scrollBehavior: const AppScrollBehavior(), // без растягивания у края
       home: const LoginScreen(),
     );
   }

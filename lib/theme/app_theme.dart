@@ -77,6 +77,25 @@ class MarketColors extends ThemeExtension<MarketColors> {
   }
 }
 
+/// Поведение прокрутки: вместо «растягивания» страницы (Android 12+)
+/// у края списка появляется лёгкое свечение цвета темы.
+class AppScrollBehavior extends MaterialScrollBehavior {
+  const AppScrollBehavior();
+
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
+    return GlowingOverscrollIndicator(
+      axisDirection: details.direction,
+      color: Theme.of(context).colorScheme.primary,
+      child: child,
+    );
+  }
+}
+
 class AppTheme {
   // Насыщенный синий — привычный цвет финансовых приложений:
   // ассоциируется с надёжностью и не спорит с зелёным/красным цветом цен.
