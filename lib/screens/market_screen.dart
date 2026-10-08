@@ -4,6 +4,7 @@ import '../data/mock_data.dart';
 import '../data/models.dart';
 import '../widgets/filter_chips_row.dart';
 import '../widgets/stock_tile.dart';
+import 'stock_detail_screen.dart';
 
 /// Рынок: поиск, фильтры по рынку и сектору, список акций.
 class MarketScreen extends StatelessWidget {
@@ -65,7 +66,15 @@ class MarketScreen extends StatelessWidget {
           Expanded(
             child: ListView.builder(
               itemCount: assets.length,
-              itemBuilder: (context, index) => StockTile(asset: assets[index]),
+              itemBuilder: (context, index) => StockTile(
+                asset: assets[index],
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => StockDetailScreen(asset: assets[index]),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
