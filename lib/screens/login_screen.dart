@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'home_shell.dart';
+
 /// Экран входа. На L2 — только разметка, без проверок и авторизации.
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -74,7 +76,14 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              FilledButton(onPressed: () {}, child: const Text('Войти')),
+              FilledButton(
+                // pushReplacement: кнопка «назад» не вернёт на экран входа
+                onPressed: () => Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const HomeShell()),
+                ),
+                child: const Text('Войти'),
+              ),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () {},
