@@ -89,6 +89,8 @@ class AppTheme {
     final scheme = ColorScheme.fromSeed(
       seedColor: seedColor,
       brightness: brightness,
+      // fidelity сохраняет насыщенность seed-цвета (по умолчанию он бледнеет)
+      dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
     );
 
     return ThemeData(
