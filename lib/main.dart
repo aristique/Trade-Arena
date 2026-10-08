@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'screens/login_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -16,8 +17,8 @@ class TradeArenaApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
-      home: const Scaffold(body: Center(child: Text('TradeArena'))),
+      themeMode: ThemeMode.system, // светлая или тёмная — как в системе
+      home: const LoginScreen(),
     );
   }
 }
