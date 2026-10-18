@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../data/mock_data.dart';
 import '../theme/app_theme.dart';
 import '../utils/format.dart';
 import '../widgets/stat_tile.dart';
 import '../widgets/ticker_avatar.dart';
-import 'login_screen.dart';
 
 /// Профиль: статистика, настройки и сброс портфеля.
 class ProfileScreen extends StatelessWidget {
@@ -159,10 +159,7 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           TextButton(
-            onPressed: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const LoginScreen()),
-            ),
+            onPressed: () => context.go('/login'),
             child: const Text('Выйти'),
           ),
         ],

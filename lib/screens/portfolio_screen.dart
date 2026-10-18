@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../data/mock_data.dart';
 import '../data/models.dart';
@@ -7,7 +8,6 @@ import '../widgets/price_change_badge.dart';
 import '../widgets/stat_tile.dart';
 import '../widgets/stock_tile.dart';
 import '../widgets/ticker_avatar.dart';
-import 'stock_detail_screen.dart';
 
 /// Портфель: итоговая стоимость, распределение и вкладки «Позиции» / «Ордера».
 class PortfolioScreen extends StatelessWidget {
@@ -51,12 +51,7 @@ class PortfolioScreen extends StatelessWidget {
                         '${position.quantity} шт. · ср. ${formatMoney(position.avgPrice)}',
                     value: position.quantity * asset.lastPrice,
                     changePct: (asset.lastPrice / position.avgPrice - 1) * 100,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => StockDetailScreen(assetId: asset.id),
-                      ),
-                    ),
+                    onTap: () => context.push('/market/${asset.id}'),
                   );
                 },
               ),

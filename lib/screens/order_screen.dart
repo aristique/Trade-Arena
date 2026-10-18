@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../data/mock_data.dart';
 import '../data/models.dart';
@@ -174,7 +175,7 @@ class OrderScreen extends StatelessWidget {
                     backgroundColor: colors.loss,
                     foregroundColor: scheme.onError,
                   ),
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => context.pop(),
             child: Text(
               '${isBuy ? 'Купить' : 'Продать'} $_previewQuantity ${asset.symbol}',
             ),

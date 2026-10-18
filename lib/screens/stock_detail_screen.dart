@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../data/mock_data.dart';
 import '../data/models.dart';
@@ -9,7 +10,6 @@ import '../widgets/news_card.dart';
 import '../widgets/price_change_badge.dart';
 import '../widgets/stat_tile.dart';
 import '../widgets/ticker_avatar.dart';
-import 'order_screen.dart';
 
 // Форма графика за день: отклонения в % от плавного тренда.
 // Нужны только этому экрану, поэтому лежат здесь, а не в mock_data.
@@ -24,15 +24,6 @@ class StockDetailScreen extends StatelessWidget {
   const StockDetailScreen({super.key, required this.assetId});
 
   final String assetId; // например 'a_aapl', приходит из адреса
-
-  void _openOrder(BuildContext context, OrderSide side) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => OrderScreen(assetId: assetId, side: side),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -200,14 +191,15 @@ class StockDetailScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => _openOrder(context, OrderSide.sell),
+                  onPressed: () =>
+                      context.push('/market/$assetId/order?side=sell'),
                   child: const Text('Продать'),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton(
-                  onPressed: () => _openOrder(context, OrderSide.buy),
+                  onPressed: () => context.push('/market/$assetId/order'),
                   child: const Text('Купить'),
                 ),
               ),
