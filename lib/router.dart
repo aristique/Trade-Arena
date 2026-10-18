@@ -9,14 +9,15 @@ import 'screens/order_screen.dart';
 import 'screens/portfolio_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/stock_detail_screen.dart';
+import 'widgets/app_shell.dart';
 
 // Карта приложения: у каждого экрана свой адрес.
 // Роутер создаётся один раз, поэтому после изменений здесь нужен restart (R).
 final router = GoRouter(
   initialLocation: '/login',
   routes: [
+    // Вход вне вкладок, поэтому на нём нет нижней панели
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-    GoRoute(path: '/market', builder: (context, state) => const MarketScreen()),
     GoRoute(
       path: '/market/:id', // /market/a_aapl
       builder: (context, state) =>
@@ -31,18 +32,53 @@ final router = GoRouter(
         return OrderScreen(assetId: state.pathParameters['id']!, side: side);
       },
     ),
-    GoRoute(
-      path: '/portfolio',
-      builder: (context, state) => const PortfolioScreen(),
-    ),
-    GoRoute(path: '/news', builder: (context, state) => const NewsScreen()),
-    GoRoute(
-      path: '/leaderboard',
-      builder: (context, state) => const LeaderboardScreen(),
-    ),
-    GoRoute(
-      path: '/profile',
-      builder: (context, state) => const ProfileScreen(),
+
+    // Разделы с вкладками. indexedStack хранит стек и прокрутку каждой вкладки
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) =>
+          AppShell(navigationShell: navigationShell),
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/market',
+              builder: (context, state) => const MarketScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/portfolio',
+              builder: (context, state) => const PortfolioScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/news',
+              builder: (context, state) => const NewsScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/leaderboard',
+              builder: (context, state) => const LeaderboardScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/profile',
+              builder: (context, state) => const ProfileScreen(),
+            ),
+          ],
+        ),
+      ],
     ),
   ],
 );

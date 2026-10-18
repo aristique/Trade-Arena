@@ -1,39 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-import 'leaderboard_screen.dart';
-import 'market_screen.dart';
-import 'news_screen.dart';
-import 'portfolio_screen.dart';
-import 'profile_screen.dart';
+/// Обёртка с нижней панелью вкладок.
+/// Состояния нет: какая вкладка открыта, знает роутер.
+class AppShell extends StatelessWidget {
+  const AppShell({super.key, required this.navigationShell});
 
-/// Главный экран с нижней навигацией.
-/// Единственный StatefulWidget: в состоянии хранится только индекс вкладки.
-class HomeShell extends StatefulWidget {
-  const HomeShell({super.key});
-
-  @override
-  State<HomeShell> createState() => _HomeShellState();
-}
-
-class _HomeShellState extends State<HomeShell> {
-  int _index = 0;
-
-  static const _screens = [
-    MarketScreen(),
-    PortfolioScreen(),
-    NewsScreen(),
-    LeaderboardScreen(),
-    ProfileScreen(),
-  ];
+  final StatefulNavigationShell navigationShell;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // IndexedStack сохраняет прокрутку вкладок при переключении
-      body: IndexedStack(index: _index, children: _screens),
+      body: navigationShell, // содержимое текущей вкладки
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
+        selectedIndex: navigationShell.currentIndex,
+        onDestinationSelected: navigationShell.goBranch,
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.candlestick_chart_outlined),
