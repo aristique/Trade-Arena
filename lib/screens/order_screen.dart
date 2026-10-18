@@ -30,6 +30,16 @@ class _OrderScreenState extends State<OrderScreen> {
   final _quantityCtrl = TextEditingController(text: '$_previewQuantity');
   final _limitCtrl = TextEditingController();
 
+  late OrderSide _side; // начальное значение приходит из адреса
+  OrderType _type = OrderType.market;
+  bool _untilCancelled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _side = widget.side;
+  }
+
   @override
   void dispose() {
     _quantityCtrl.dispose();
@@ -49,8 +59,8 @@ class _OrderScreenState extends State<OrderScreen> {
     final colors = MarketColors.of(context);
 
     final asset = assetById(widget.assetId);
-    final side = widget.side;
-    final isBuy = side == OrderSide.buy;
+    final isBuy = _side == OrderSide.buy;
+    final isLimit = _type == OrderType.limit;
     final position = positionFor(asset.id);
 
     final amount = asset.lastPrice * _previewQuantity;
@@ -106,9 +116,10 @@ class _OrderScreenState extends State<OrderScreen> {
                   ButtonSegment(value: OrderSide.buy, label: Text('Купить')),
                   ButtonSegment(value: OrderSide.sell, label: Text('Продать')),
                 ],
-                selected: {side},
+                selected: {_side},
                 showSelectedIcon: false,
-                onSelectionChanged: (_) {},
+                onSelectionChanged: (value) =>
+                    setState(() => _side = value.first),
               ),
               const SizedBox(height: 12),
               SegmentedButton<OrderType>(
@@ -122,9 +133,10 @@ class _OrderScreenState extends State<OrderScreen> {
                     label: Text('Лимитный'),
                   ),
                 ],
-                selected: const {OrderType.market},
+                selected: {_type},
                 showSelectedIcon: false,
-                onSelectionChanged: (_) {},
+                onSelectionChanged: (value) =>
+                    setState(() => _type = value.first),
               ),
               const SizedBox(height: 24),
               TextFormField(
@@ -149,7 +161,7 @@ class _OrderScreenState extends State<OrderScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _limitCtrl,
-                enabled: false, // включится для лимитного ордера
+                enabled: isLimit,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
@@ -161,13 +173,15 @@ class _OrderScreenState extends State<OrderScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Действует до отмены'),
-                subtitle: const Text('Иначе ордер снимется в конце дня'),
-                value: true,
-                onChanged: (_) {},
-              ),
+              // Рыночный ордер исполняется сразу, срок ему не нужен
+              if (isLimit)
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Действует до отмены'),
+                  subtitle: const Text('Иначе ордер снимется в конце дня'),
+                  value: _untilCancelled,
+                  onChanged: (value) => setState(() => _untilCancelled = value),
+                ),
               const SizedBox(height: 16),
               Card(
                 child: Padding(
