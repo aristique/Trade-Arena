@@ -146,7 +146,7 @@ class ProfileScreen extends StatelessWidget {
             ),
             icon: const Icon(Icons.restart_alt),
             label: const Text('Сбросить портфель'),
-            onPressed: () => _confirmReset(context),
+            onPressed: () => _resetPortfolio(context),
           ),
           const SizedBox(height: 8),
           Text(
@@ -191,26 +191,40 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 
-  // Диалог подтверждения. Сам сброс появится вместе с торговой логикой (L4).
-  void _confirmReset(BuildContext context) {
-    showDialog<void>(
+  // Сам сброс появится вместе с торговой логикой (L4), пока только сообщаем
+  Future<void> _resetPortfolio(BuildContext context) async {
+    final ok = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogCtx) => AlertDialog(
         title: const Text('Сбросить портфель?'),
         content: const Text(
           'Все позиции и история ордеров будут удалены. Это действие нельзя отменить.',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogCtx, false),
             child: const Text('Отмена'),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(context),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogCtx).colorScheme.error,
+              foregroundColor: Theme.of(dialogCtx).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.pop(dialogCtx, true),
             child: const Text('Сбросить'),
           ),
         ],
       ),
     );
+    if (ok == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Портфель сброшен, баланс снова '
+            '${formatMoney(portfolio.startingBalance)}',
+          ),
+        ),
+      );
+    }
   }
 }
