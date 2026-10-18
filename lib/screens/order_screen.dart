@@ -47,6 +47,43 @@ class _OrderScreenState extends State<OrderScreen> {
     super.dispose();
   }
 
+  // Лимитная цена из поля, запятую принимаем как точку: «12,5» = 12.5
+  double? get _limitPrice =>
+      double.tryParse(_limitCtrl.text.replaceAll(',', '.'));
+
+  // Цена для расчёта: у лимитного ордера — введённый лимит, иначе текущая
+  double _price(Asset asset) {
+    final limit = _limitPrice;
+    if (_type == OrderType.limit && limit != null && limit > 0) return limit;
+    return asset.lastPrice;
+  }
+
+  String? _validateQuantity(String? value, Asset asset) {
+    final quantity = int.tryParse(value ?? '');
+    if (quantity == null) return 'Введите количество';
+    if (quantity < 1) return 'Минимум 1 акция';
+
+    if (_side == OrderSide.buy) {
+      final cost = quantity * _price(asset) * (1 + _feeRate);
+      if (cost > portfolio.cashBalance) {
+        return 'Не хватает средств: нужно ${formatMoney(cost)}';
+      }
+    } else {
+      final owned = positionFor(asset.id)?.quantity ?? 0;
+      if (owned == 0) return 'У вас нет акций ${asset.symbol}';
+      if (quantity > owned) return 'В портфеле только $owned шт.';
+    }
+    return null;
+  }
+
+  String? _validateLimit(String? value) {
+    if (_type != OrderType.limit) return null; // у рыночного поле не нужно
+    final price = _limitPrice;
+    if (price == null) return 'Введите цену';
+    if (price <= 0) return 'Цена должна быть больше нуля';
+    return null;
+  }
+
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     context.pop(); // форма открыта через push, закрываем через pop
@@ -144,12 +181,7 @@ class _OrderScreenState extends State<OrderScreen> {
                 keyboardType: TextInputType.number,
                 // Только цифры: минус, точку и буквы ввести нельзя
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                validator: (value) {
-                  final quantity = int.tryParse(value ?? '');
-                  if (quantity == null) return 'Введите количество';
-                  if (quantity < 1) return 'Минимум 1 акция';
-                  return null;
-                },
+                validator: (value) => _validateQuantity(value, asset),
                 decoration: InputDecoration(
                   labelText: 'Количество',
                   suffixText: 'шт.',
@@ -165,6 +197,10 @@ class _OrderScreenState extends State<OrderScreen> {
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                ],
+                validator: _validateLimit,
                 decoration: InputDecoration(
                   labelText: 'Лимитная цена',
                   prefixText: '\$ ',
