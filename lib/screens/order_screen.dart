@@ -8,9 +8,6 @@ import '../theme/app_theme.dart';
 import '../utils/format.dart';
 import '../widgets/ticker_avatar.dart';
 
-/// Количество для предпросмотра. На L2 поле не связано с расчётом.
-const _previewQuantity = 4;
-
 /// Комиссия брокера — 0,1 % от суммы сделки.
 const _feeRate = 0.001;
 
@@ -27,7 +24,7 @@ class OrderScreen extends StatefulWidget {
 
 class _OrderScreenState extends State<OrderScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _quantityCtrl = TextEditingController(text: '$_previewQuantity');
+  final _quantityCtrl = TextEditingController(text: '1');
   final _limitCtrl = TextEditingController();
 
   late OrderSide _side; // начальное значение приходит из адреса
@@ -46,6 +43,8 @@ class _OrderScreenState extends State<OrderScreen> {
     _limitCtrl.dispose();
     super.dispose();
   }
+
+  int get _quantity => int.tryParse(_quantityCtrl.text) ?? 0;
 
   // Лимитная цена из поля, запятую принимаем как точку: «12,5» = 12.5
   double? get _limitPrice =>
@@ -86,6 +85,15 @@ class _OrderScreenState extends State<OrderScreen> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
+
+    final asset = assetById(widget.assetId);
+    final action = _side == OrderSide.buy ? 'покупку' : 'продажу';
+    final message = _type == OrderType.limit
+        ? 'Лимитный ордер на $action $_quantity ${asset.symbol} '
+              'по ${formatMoney(_price(asset))} создан'
+        : 'Ордер на $action $_quantity ${asset.symbol} отправлен';
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
     context.pop(); // форма открыта через push, закрываем через pop
   }
 
@@ -100,7 +108,8 @@ class _OrderScreenState extends State<OrderScreen> {
     final isLimit = _type == OrderType.limit;
     final position = positionFor(asset.id);
 
-    final amount = asset.lastPrice * _previewQuantity;
+    // Итог считается заново при каждом вводе (setState в onChanged)
+    final amount = _price(asset) * _quantity;
     final fee = amount * _feeRate;
     // При покупке комиссия добавляется к сумме, при продаже — вычитается
     final total = isBuy ? amount + fee : amount - fee;
@@ -178,6 +187,7 @@ class _OrderScreenState extends State<OrderScreen> {
               const SizedBox(height: 24),
               TextFormField(
                 controller: _quantityCtrl,
+                onChanged: (_) => setState(() {}),
                 keyboardType: TextInputType.number,
                 // Только цифры: минус, точку и буквы ввести нельзя
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -193,6 +203,7 @@ class _OrderScreenState extends State<OrderScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _limitCtrl,
+                onChanged: (_) => setState(() {}),
                 enabled: isLimit,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
@@ -225,13 +236,10 @@ class _OrderScreenState extends State<OrderScreen> {
                   child: Column(
                     children: [
                       _SummaryRow(
-                        label: 'Цена за акцию',
-                        value: formatMoney(asset.lastPrice),
+                        label: isLimit ? 'Лимитная цена' : 'Цена за акцию',
+                        value: formatMoney(_price(asset)),
                       ),
-                      _SummaryRow(
-                        label: 'Количество',
-                        value: '$_previewQuantity шт.',
-                      ),
+                      _SummaryRow(label: 'Количество', value: '$_quantity шт.'),
                       _SummaryRow(label: 'Сумма', value: formatMoney(amount)),
                       _SummaryRow(
                         label: 'Комиссия 0,1 %',
@@ -267,7 +275,7 @@ class _OrderScreenState extends State<OrderScreen> {
                   ),
             onPressed: _submit,
             child: Text(
-              '${isBuy ? 'Купить' : 'Продать'} $_previewQuantity ${asset.symbol}',
+              '${isBuy ? 'Купить' : 'Продать'} $_quantity ${asset.symbol}',
             ),
           ),
         ),
