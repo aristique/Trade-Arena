@@ -14,9 +14,9 @@ const _feeRate = 0.001;
 
 /// Форма ордера: покупка/продажа, рыночный/лимитный, количество и итог.
 class OrderScreen extends StatelessWidget {
-  const OrderScreen({super.key, required this.asset, required this.side});
+  const OrderScreen({super.key, required this.assetId, required this.side});
 
-  final Asset asset;
+  final String assetId;
   final OrderSide side;
 
   @override
@@ -25,6 +25,7 @@ class OrderScreen extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final colors = MarketColors.of(context);
 
+    final asset = assetById(assetId);
     final isBuy = side == OrderSide.buy;
     final position = positionFor(asset.id);
 

@@ -54,7 +54,7 @@ class PortfolioScreen extends StatelessWidget {
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => StockDetailScreen(asset: asset),
+                        builder: (_) => StockDetailScreen(assetId: asset.id),
                       ),
                     ),
                   );

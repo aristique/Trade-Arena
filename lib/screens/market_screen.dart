@@ -71,7 +71,8 @@ class MarketScreen extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => StockDetailScreen(asset: assets[index]),
+                    builder: (_) =>
+                        StockDetailScreen(assetId: assets[index].id),
                   ),
                 ),
               ),

@@ -21,15 +21,15 @@ const _chartShape = <double>[
 
 /// Карточка акции: цена, график, моя позиция, кнопки и новости.
 class StockDetailScreen extends StatelessWidget {
-  const StockDetailScreen({super.key, required this.asset});
+  const StockDetailScreen({super.key, required this.assetId});
 
-  final Asset asset;
+  final String assetId; // например 'a_aapl', приходит из адреса
 
   void _openOrder(BuildContext context, OrderSide side) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => OrderScreen(asset: asset, side: side),
+        builder: (_) => OrderScreen(assetId: assetId, side: side),
       ),
     );
   }
@@ -40,6 +40,8 @@ class StockDetailScreen extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final colors = MarketColors.of(context);
 
+    // Экран сам находит акцию по id
+    final asset = assetById(assetId);
     final position = positionFor(asset.id);
     final news = newsArticles
         .where((n) => n.symbols.contains(asset.symbol))
