@@ -51,7 +51,7 @@ class PortfolioScreen extends StatelessWidget {
                         '${position.quantity} шт. · ср. ${formatMoney(position.avgPrice)}',
                     value: position.quantity * asset.lastPrice,
                     changePct: (asset.lastPrice / position.avgPrice - 1) * 100,
-                    onTap: () => context.push('/market/${asset.id}'),
+                    onTap: () => context.push('/portfolio/${asset.id}'),
                   );
                 },
               ),

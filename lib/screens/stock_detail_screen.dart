@@ -34,6 +34,9 @@ class StockDetailScreen extends StatelessWidget {
     // Экран сам находит акцию по id
     final asset = assetById(assetId);
     final position = positionFor(asset.id);
+    // Текущий адрес: /market/a_aapl или /portfolio/a_aapl.
+    // Ордер открываем от него, чтобы остаться в той же вкладке.
+    final here = GoRouterState.of(context).uri.path;
     final news = newsArticles
         .where((n) => n.symbols.contains(asset.symbol))
         .toList();
@@ -191,15 +194,14 @@ class StockDetailScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () =>
-                      context.push('/market/$assetId/order?side=sell'),
+                  onPressed: () => context.push('$here/order?side=sell'),
                   child: const Text('Продать'),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton(
-                  onPressed: () => context.push('/market/$assetId/order'),
+                  onPressed: () => context.push('$here/order'),
                   child: const Text('Купить'),
                 ),
               ),

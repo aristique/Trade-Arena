@@ -18,20 +18,6 @@ final router = GoRouter(
   routes: [
     // Вход вне вкладок, поэтому на нём нет нижней панели
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-    GoRoute(
-      path: '/market/:id', // /market/a_aapl
-      builder: (context, state) =>
-          StockDetailScreen(assetId: state.pathParameters['id']!),
-    ),
-    GoRoute(
-      path: '/market/:id/order', // /market/a_aapl/order?side=sell
-      builder: (context, state) {
-        final side = state.uri.queryParameters['side'] == 'sell'
-            ? OrderSide.sell
-            : OrderSide.buy;
-        return OrderScreen(assetId: state.pathParameters['id']!, side: side);
-      },
-    ),
 
     // Разделы с вкладками. indexedStack хранит стек и прокрутку каждой вкладки
     StatefulShellRoute.indexedStack(
@@ -43,6 +29,7 @@ final router = GoRouter(
             GoRoute(
               path: '/market',
               builder: (context, state) => const MarketScreen(),
+              routes: [_assetRoute()], // /market/a_aapl
             ),
           ],
         ),
@@ -51,6 +38,7 @@ final router = GoRouter(
             GoRoute(
               path: '/portfolio',
               builder: (context, state) => const PortfolioScreen(),
+              routes: [_assetRoute()], // /portfolio/a_aapl
             ),
           ],
         ),
@@ -82,3 +70,24 @@ final router = GoRouter(
     ),
   ],
 );
+
+// Карточка акции и форма ордера. Подключаются и к рынку, и к портфелю,
+// чтобы открываться внутри своей вкладки. Пути относительные, без «/».
+GoRoute _assetRoute() {
+  return GoRoute(
+    path: ':id',
+    builder: (context, state) =>
+        StockDetailScreen(assetId: state.pathParameters['id']!),
+    routes: [
+      GoRoute(
+        path: 'order', // .../a_aapl/order?side=sell
+        builder: (context, state) {
+          final side = state.uri.queryParameters['side'] == 'sell'
+              ? OrderSide.sell
+              : OrderSide.buy;
+          return OrderScreen(assetId: state.pathParameters['id']!, side: side);
+        },
+      ),
+    ],
+  );
+}
