@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import 'home_shell.dart';
+import 'package:go_router/go_router.dart';
 
 /// Экран входа. На L2 — только разметка, без проверок и авторизации.
 class LoginScreen extends StatelessWidget {
@@ -77,11 +76,8 @@ class LoginScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               FilledButton(
-                // pushReplacement: кнопка «назад» не вернёт на экран входа
-                onPressed: () => Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const HomeShell()),
-                ),
+                // go, а не push: экран входа уходит из стека
+                onPressed: () => context.go('/market'),
                 child: const Text('Войти'),
               ),
               const SizedBox(height: 12),

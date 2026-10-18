@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'screens/login_screen.dart';
+import 'router.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -12,14 +12,14 @@ class TradeArenaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'TradeArena',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system, // светлая или тёмная — как в системе
       scrollBehavior: const AppScrollBehavior(), // без растягивания у края
-      home: const LoginScreen(),
+      routerConfig: router, // стартовый экран задан в router.dart
     );
   }
 }
