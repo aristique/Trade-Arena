@@ -16,6 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  bool _obscure = true; // пароль скрыт, пока не нажали на глазик
 
   @override
   void dispose() {
@@ -27,6 +28,16 @@ class _LoginScreenState extends State<LoginScreen> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return; // ошибки уже под полями
     context.go('/market'); // go, а не push: экран входа уходит из стека
+  }
+
+  // Письмо не отправляется, только сообщаем пользователю
+  void _forgotPassword() {
+    final email = _emailCtrl.text.trim();
+    final message = email.isEmpty
+        ? 'Сначала введите email'
+        : 'Ссылка для восстановления отправлена на $email';
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -90,20 +101,27 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordCtrl,
-                  obscureText: true,
+                  obscureText: _obscure,
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) => _submit(),
                   validator: validatePassword,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Пароль',
-                    prefixIcon: Icon(Icons.lock_outline),
-                    suffixIcon: Icon(Icons.visibility_off_outlined),
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscure
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                      onPressed: () => setState(() => _obscure = !_obscure),
+                    ),
                   ),
                 ),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: _forgotPassword,
                     child: const Text('Забыли пароль?'),
                   ),
                 ),
