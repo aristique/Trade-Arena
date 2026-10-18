@@ -129,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 FilledButton(onPressed: _submit, child: const Text('Войти')),
                 const SizedBox(height: 12),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () => context.push('/register'),
                   child: const Text('Нет аккаунта? Зарегистрируйтесь'),
                 ),
               ],

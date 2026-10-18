@@ -8,6 +8,7 @@ import 'screens/news_screen.dart';
 import 'screens/order_screen.dart';
 import 'screens/portfolio_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/register_screen.dart';
 import 'screens/stock_detail_screen.dart';
 import 'widgets/app_shell.dart';
 
@@ -16,8 +17,12 @@ import 'widgets/app_shell.dart';
 final router = GoRouter(
   initialLocation: '/login',
   routes: [
-    // Вход вне вкладок, поэтому на нём нет нижней панели
+    // Вход и регистрация вне вкладок, поэтому на них нет нижней панели
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+    GoRoute(
+      path: '/register',
+      builder: (context, state) => const RegisterScreen(),
+    ),
 
     // Разделы с вкладками. indexedStack хранит стек и прокрутку каждой вкладки
     StatefulShellRoute.indexedStack(
