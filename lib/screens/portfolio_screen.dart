@@ -261,51 +261,96 @@ class _OrderTile extends StatelessWidget {
     // Для исполненного показываем цену сделки, иначе — лимитную цену
     final price = order.executedPrice ?? order.limitPrice!;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          TickerAvatar(label: asset.symbol),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    // Отменить можно только ожидающий ордер
+    return InkWell(
+      onTap: order.status == OrderStatus.pending
+          ? () => _cancel(context)
+          : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            TickerAvatar(label: asset.symbol),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$sideText ${asset.symbol}',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$typeText · ${order.quantity} шт. · ${formatDateTime(order.createdAt)}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '$sideText ${asset.symbol}',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                  formatMoney(price),
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  '$typeText · ${order.quantity} шт. · ${formatDateTime(order.createdAt)}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
+                const SizedBox(height: 4),
+                _StatusChip(status: order.status),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _cancel(BuildContext context) async {
+    final asset = assetById(order.assetId);
+    final action = order.side == OrderSide.buy ? 'покупку' : 'продажу';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Отменить ордер?'),
+        content: Text(
+          'Лимитный ордер на $action ${order.quantity} ${asset.symbol} '
+          'по ${formatMoney(order.limitPrice!)}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, false),
+            child: const Text('Нет'),
           ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                formatMoney(price),
-                style: textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 4),
-              _StatusChip(status: order.status),
-            ],
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogCtx).colorScheme.error,
+              foregroundColor: Theme.of(dialogCtx).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            child: const Text('Отменить ордер'),
           ),
         ],
       ),
     );
+    // Статус в списке поменяется на L4, когда появится общее состояние
+    if (ok == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Ордер на $action ${order.quantity} ${asset.symbol} отменён',
+          ),
+        ),
+      );
+    }
   }
 }
 
