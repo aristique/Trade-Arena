@@ -159,12 +159,36 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           TextButton(
-            onPressed: () => context.go('/login'),
+            onPressed: () => _logout(context),
             child: const Text('Выйти'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _logout(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Выйти из аккаунта?'),
+        actions: [
+          // Закрываем через dialogCtx: у вкладок свои навигаторы
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, false),
+            child: const Text('Отмена'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            child: const Text('Выйти'),
+          ),
+        ],
+      ),
+    );
+    // ok == true, а не ok!: если закрыть диалог тапом мимо, придёт null
+    if (ok == true && context.mounted) {
+      context.go('/login'); // go: вкладки уходят из стека
+    }
   }
 
   // Диалог подтверждения. Сам сброс появится вместе с торговой логикой (L4).
