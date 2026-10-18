@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 
-/// Горизонтальный ряд чипов-фильтров. На L2 выбор не меняется —
-/// выделен чип с индексом [selectedIndex].
+/// Горизонтальный ряд чипов-фильтров.
+/// Выделен чип [selectedIndex], нажатие сообщает индекс через [onSelected].
 class FilterChipsRow extends StatelessWidget {
   const FilterChipsRow({
     super.key,
     required this.labels,
     this.selectedIndex = 0,
+    this.onSelected,
   });
 
   final List<String> labels;
   final int selectedIndex;
+  final ValueChanged<int>? onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +26,7 @@ class FilterChipsRow extends StatelessWidget {
         itemBuilder: (context, index) => ChoiceChip(
           label: Text(labels[index]),
           selected: index == selectedIndex,
-          onSelected: (_) {}, // фильтрация появится в следующих лабораторных
+          onSelected: (_) => onSelected?.call(index),
         ),
       ),
     );
