@@ -103,10 +103,19 @@ class Order {
   final double? realizedProfit;
 
   Order cancelled() => Order(
-    id: id, userId: userId, assetId: assetId, side: side, type: type,
-    quantity: quantity, limitPrice: limitPrice, executedPrice: executedPrice,
-    fee: fee, status: OrderStatus.cancelled, createdAt: createdAt,
-    executedAt: executedAt, untilCancelled: untilCancelled,
+    id: id,
+    userId: userId,
+    assetId: assetId,
+    side: side,
+    type: type,
+    quantity: quantity,
+    limitPrice: limitPrice,
+    executedPrice: executedPrice,
+    fee: fee,
+    status: OrderStatus.cancelled,
+    createdAt: createdAt,
+    executedAt: executedAt,
+    untilCancelled: untilCancelled,
     realizedProfit: realizedProfit,
   );
 }
@@ -156,9 +165,14 @@ class Participant {
 
 /// Поля формы. Id, комиссия, статус и время определяются хранилищем.
 class OrderDraft {
-  const OrderDraft({required this.assetId, required this.side,
-    required this.type, required this.quantity, this.limitPrice,
-    this.untilCancelled = true});
+  const OrderDraft({
+    required this.assetId,
+    required this.side,
+    required this.type,
+    required this.quantity,
+    this.limitPrice,
+    this.untilCancelled = true,
+  });
   final String assetId;
   final OrderSide side;
   final OrderType type;
@@ -168,7 +182,11 @@ class OrderDraft {
 }
 
 class UserProfile {
-  const UserProfile({required this.id, required this.name, required this.email});
+  const UserProfile({
+    required this.id,
+    required this.name,
+    required this.email,
+  });
   final String id;
   final String name;
   final String email;
@@ -176,13 +194,26 @@ class UserProfile {
 
 /// Неизменяемый ответ источника, без Flutter и без зависимости от mock-а.
 class TradingSnapshot {
-  TradingSnapshot({required this.user, required this.portfolio,
-    required List<Asset> assets, required List<Position> positions,
-    required List<Order> orders, required List<NewsArticle> news,
-    required List<Participant> participants, required this.asOf})
-    : assets = List.unmodifiable(assets), positions = List.unmodifiable(positions),
-      orders = List.unmodifiable(orders), news = List.unmodifiable(news),
-      participants = List.unmodifiable(participants);
+  TradingSnapshot({
+    required this.user,
+    required this.portfolio,
+    required List<Asset> assets,
+    required List<Position> positions,
+    required List<Order> orders,
+    required List<NewsArticle> news,
+    required List<Participant> participants,
+    required this.asOf,
+    required Map<String, List<double>> priceHistory,
+  }) : assets = List.unmodifiable(assets),
+       positions = List.unmodifiable(positions),
+       orders = List.unmodifiable(orders),
+       news = List.unmodifiable(news),
+       participants = List.unmodifiable(participants),
+       priceHistory = Map.unmodifiable(
+         priceHistory.map(
+           (id, values) => MapEntry(id, List<double>.unmodifiable(values)),
+         ),
+       );
   final UserProfile user;
   final Portfolio portfolio;
   final List<Asset> assets;
@@ -191,6 +222,7 @@ class TradingSnapshot {
   final List<NewsArticle> news;
   final List<Participant> participants;
   final DateTime asOf;
+  final Map<String, List<double>> priceHistory;
 }
 
 const tradingFeeRate = 0.001;
@@ -199,10 +231,20 @@ const tradingFeeRate = 0.001;
 double money(double value) => (value * 100).roundToDouble() / 100;
 double orderFee(double amount) => money(amount * tradingFeeRate);
 
-double reservedCash(Iterable<Order> orders) => money(orders
-  .where((o) => o.status == OrderStatus.pending && o.side == OrderSide.buy)
-  .fold<double>(0, (sum, o) => sum + money(o.quantity * o.limitPrice!) + o.fee));
+double reservedCash(Iterable<Order> orders) => money(
+  orders
+      .where((o) => o.status == OrderStatus.pending && o.side == OrderSide.buy)
+      .fold<double>(
+        0,
+        (sum, o) => sum + money(o.quantity * o.limitPrice!) + o.fee,
+      ),
+);
 
 int reservedShares(Iterable<Order> orders, String assetId) => orders
-  .where((o) => o.status == OrderStatus.pending && o.side == OrderSide.sell && o.assetId == assetId)
-  .fold(0, (sum, o) => sum + o.quantity);
+    .where(
+      (o) =>
+          o.status == OrderStatus.pending &&
+          o.side == OrderSide.sell &&
+          o.assetId == assetId,
+    )
+    .fold(0, (sum, o) => sum + o.quantity);

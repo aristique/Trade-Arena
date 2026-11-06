@@ -11,12 +11,17 @@ import 'theme/app_theme.dart';
 void main() {
   // Единственное место выбора источника. На L5 здесь будет HttpRepository.
   final repository = MockTradingRepository();
-  runApp(MultiProvider(providers: [
-    Provider<TradingRepository>.value(value: repository),
-    // Только для демонстрационного переключателя аварии в профиле.
-    Provider<MockTradingRepository>.value(value: repository),
-    ChangeNotifierProvider(create: (_) => TradingModel(repository)..load()),
-  ], child: const TradeArenaApp()));
+  runApp(
+    MultiProvider(
+      providers: [
+        Provider<TradingRepository>.value(value: repository),
+        // Только для демонстрационного переключателя аварии в профиле.
+        Provider<MockTradingRepository>.value(value: repository),
+        ChangeNotifierProvider(create: (_) => TradingModel(repository)..load()),
+      ],
+      child: const TradeArenaApp(),
+    ),
+  );
 }
 
 class TradeArenaApp extends StatelessWidget {

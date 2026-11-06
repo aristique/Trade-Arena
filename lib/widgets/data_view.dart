@@ -8,10 +8,19 @@ class ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
   @override
-  Widget build(BuildContext context) => Center(child: Padding(
-    padding: const EdgeInsets.all(24), child: Column(mainAxisSize: MainAxisSize.min,
-      children: [Text(message, textAlign: TextAlign.center), const SizedBox(height: 16),
-        FilledButton(onPressed: onRetry, child: const Text('Повторить'))])));
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: 16),
+          FilledButton(onPressed: onRetry, child: const Text('Повторить')),
+        ],
+      ),
+    ),
+  );
 }
 
 /// Общие loading / error / data, в том числе для уже открытых вкладок.
@@ -21,11 +30,21 @@ class DataView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final model = context.watch<TradingModel>();
-    if (model.isLoading) return const Center(child: CircularProgressIndicator());
-    if (model.error != null) return ErrorView(message: model.error!,
-      onRetry: () => context.read<TradingModel>().load());
-    if (!model.hasData) return ErrorView(message: 'Данные ещё не загружены',
-      onRetry: () => context.read<TradingModel>().load());
+    if (model.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (model.error != null) {
+      return ErrorView(
+        message: model.error!,
+        onRetry: () => context.read<TradingModel>().load(),
+      );
+    }
+    if (!model.hasData) {
+      return ErrorView(
+        message: 'Данные ещё не загружены',
+        onRetry: () => context.read<TradingModel>().load(),
+      );
+    }
     return builder(context, model);
   }
 }
@@ -36,5 +55,11 @@ class DataScreen extends StatelessWidget {
   final Widget Function(BuildContext, TradingModel) builder;
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(title)), body: DataView(builder: builder));
+    appBar: AppBar(title: Text(title), actions: [
+      IconButton(tooltip: 'Обновить данные',
+        onPressed: () => context.read<TradingModel>().load(),
+        icon: const Icon(Icons.refresh)),
+    ]),
+    body: DataView(builder: builder),
+  );
 }
