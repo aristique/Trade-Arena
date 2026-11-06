@@ -14,6 +14,7 @@ import re
 import subprocess
 
 from pypdf import PdfReader, PdfWriter
+from pypdf.generic import ContentStream, NameObject
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
@@ -61,6 +62,9 @@ def fonts(reference):
                         widths[ord(text)] = old_widths.get(code, font.face.defaultWidth)
             font.face.charToGlyph = restored
             font.face.charWidths = widths
+            # Different PDF subsets share an internal PostScript name. Without
+            # unique names ReportLab aliases them and silently loses glyphs.
+            font.face.name = alias.encode('ascii')
             pdfmetrics.registerFont(font)
             group = 'mono' if 'Mono' in name else 'bold' if 'Bold' in name else 'regular'
             FONT_GROUPS[group].append((alias, set(restored)))
@@ -77,7 +81,10 @@ def fonts(reference):
         FONT_GROUPS[group][:-1] = sorted(FONT_GROUPS[group][:-1], key=lambda f: -len(f[1]))
 
 
-def rich(text, group='regular'):
+def rich(text, group='regular', preserve_spaces=False):
+    def encoded(value):
+        value = escape(value)
+        return value.replace(' ', '&#160;') if preserve_spaces else value
     runs = []
     current = None
     chunk = ''
@@ -86,12 +93,12 @@ def rich(text, group='regular'):
         if name is None:
             raise ValueError(f'Missing glyph {char!r} in {group}')
         if name != current and chunk:
-            runs.append(f'<font name="{current}">{escape(chunk)}</font>')
+            runs.append(f'<font name="{current}">{encoded(chunk)}</font>')
             chunk = ''
         current = name
         chunk += char
     if chunk:
-        runs.append(f'<font name="{current}">{escape(chunk)}</font>')
+        runs.append(f'<font name="{current}">{encoded(chunk)}</font>')
     return ''.join(runs)
 
 
@@ -117,15 +124,17 @@ class Architecture(Flowable):
             c.setStrokeColor(BLUE)
             c.setFillColor(HexColor('#f2f2f2'))
             c.rect(54, y, 364, 43, fill=1)
-            for value, offset, size, group in [(title, 27, 11, 'bold'), (subtitle, 10, 10, 'regular')]:
+            for value, offset, size, group in [(title, 32, 11, 'bold'), (subtitle, 15, 10, 'regular')]:
                 p = Paragraph(rich(value, group), style('diagram', fontSize=size, leading=size + 1, alignment=TA_CENTER))
                 p.wrap(354, 30)
                 p.drawOn(c, 59, y + offset - size)
             if i < 3:
                 c.setStrokeColor(black)
                 c.line(228, y, 228, y - 18)
-                c.line(228, y - 18, 224, y - 13)
-                c.line(228, y - 18, 232, y - 13)
+                tip = y if i == 2 else y - 18
+                tail = tip - 5 if i == 2 else tip + 5
+                c.line(228, tip, 224, tail)
+                c.line(228, tip, 232, tail)
                 label = ['watch / read', 'Future<Result<T>>', 'implements'][i]
                 p = Paragraph(rich(label), style('arrow', fontSize=8, leading=9))
                 p.wrap(145, 15)
@@ -148,7 +157,7 @@ def build(reference_path, output):
     def page(): story.append(PageBreak())
     def code(text, size=None):
         st = code_style if size is None else style('small-code', fontSize=size, leading=size + 2.3)
-        content = '<br/>'.join(rich(line, 'mono').replace(' ', '&#160;') for line in text.strip('\n').splitlines())
+        content = '<br/>'.join(rich(line, 'mono', True) for line in text.strip('\n').splitlines())
         table = Table([[Paragraph(content, st)]], colWidths=[BODY_WIDTH])
         table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, -1), HexColor('#f2f2f2')),
             ('LEFTPADDING', (0, 0), (-1, -1), 5), ('RIGHTPADDING', (0, 0), (-1, -1), 5),
@@ -378,7 +387,7 @@ def build(reference_path, output):
     # Keep each entry on a page; wrap long messages with the same mono styling.
     for line in log.splitlines():
         story.append(Paragraph(rich(line, 'mono'), style('history', fontSize=7.6, leading=10.1, spaceAfter=2)))
-    story.append(Spacer(1, 12))
+    page()
     h('8. Вывод')
     p('В TradeArena реализовано общее состояние на Provider и ChangeNotifier, интерфейс '
       'Repository, mock с задержкой и управляемой ошибкой, три состояния загрузки и retry. '
@@ -406,6 +415,22 @@ def build(reference_path, output):
     centered('Тема: Управление состоянием и Repository', 441.5, 18)
     c.save()
     cover = reference.pages[0]
+    # Remove replaced text operators as well: the PDF must not retain an
+    # invisible L3 number/subject underneath the new visible lines.
+    content = ContentStream(cover.get_contents(), reference)
+    filtered = []
+    text_y = None
+    for operands, operator in content.operations:
+        if operator == b'BT':
+            text_y = None
+        if operator == b'Td':
+            text_y = float(operands[1])
+        if operator in (b'Tj', b'TJ') and text_y is not None and any(
+                abs(text_y - old_y) < 0.1 for old_y in (437.339, 383.939)):
+            continue
+        filtered.append((operands, operator))
+    content.operations = filtered
+    cover[NameObject('/Contents')] = content
     cover.merge_page(PdfReader(overlay).pages[0])
     writer = PdfWriter()
     writer.add_page(cover)
