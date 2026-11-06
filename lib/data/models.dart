@@ -83,6 +83,8 @@ class Order {
     required this.status,
     required this.createdAt,
     this.executedAt,
+    this.untilCancelled = true,
+    this.realizedProfit,
   });
 
   final String id;
@@ -97,10 +99,20 @@ class Order {
   final OrderStatus status;
   final DateTime createdAt;
   final DateTime? executedAt;
+  final bool untilCancelled;
+  final double? realizedProfit;
+
+  Order cancelled() => Order(
+    id: id, userId: userId, assetId: assetId, side: side, type: type,
+    quantity: quantity, limitPrice: limitPrice, executedPrice: executedPrice,
+    fee: fee, status: OrderStatus.cancelled, createdAt: createdAt,
+    executedAt: executedAt, untilCancelled: untilCancelled,
+    realizedProfit: realizedProfit,
+  );
 }
 
 class NewsArticle {
-  const NewsArticle({
+  NewsArticle({
     required this.id,
     required this.title,
     required this.summary,
@@ -109,8 +121,8 @@ class NewsArticle {
     this.imageUrl,
     required this.publishedAt,
     required this.market,
-    required this.symbols,
-  });
+    required List<String> symbols,
+  }) : symbols = List.unmodifiable(symbols);
 
   final String id;
   final String title;
@@ -141,3 +153,56 @@ class Participant {
   final int tradesCount;
   final bool isMe;
 }
+
+/// Поля формы. Id, комиссия, статус и время определяются хранилищем.
+class OrderDraft {
+  const OrderDraft({required this.assetId, required this.side,
+    required this.type, required this.quantity, this.limitPrice,
+    this.untilCancelled = true});
+  final String assetId;
+  final OrderSide side;
+  final OrderType type;
+  final int quantity;
+  final double? limitPrice;
+  final bool untilCancelled;
+}
+
+class UserProfile {
+  const UserProfile({required this.id, required this.name, required this.email});
+  final String id;
+  final String name;
+  final String email;
+}
+
+/// Неизменяемый ответ источника, без Flutter и без зависимости от mock-а.
+class TradingSnapshot {
+  TradingSnapshot({required this.user, required this.portfolio,
+    required List<Asset> assets, required List<Position> positions,
+    required List<Order> orders, required List<NewsArticle> news,
+    required List<Participant> participants, required this.asOf})
+    : assets = List.unmodifiable(assets), positions = List.unmodifiable(positions),
+      orders = List.unmodifiable(orders), news = List.unmodifiable(news),
+      participants = List.unmodifiable(participants);
+  final UserProfile user;
+  final Portfolio portfolio;
+  final List<Asset> assets;
+  final List<Position> positions;
+  final List<Order> orders;
+  final List<NewsArticle> news;
+  final List<Participant> participants;
+  final DateTime asOf;
+}
+
+const tradingFeeRate = 0.001;
+
+/// Расчёты одинаковы на клиенте и в mock-е; суммы округляются до цента.
+double money(double value) => (value * 100).roundToDouble() / 100;
+double orderFee(double amount) => money(amount * tradingFeeRate);
+
+double reservedCash(Iterable<Order> orders) => money(orders
+  .where((o) => o.status == OrderStatus.pending && o.side == OrderSide.buy)
+  .fold<double>(0, (sum, o) => sum + money(o.quantity * o.limitPrice!) + o.fee));
+
+int reservedShares(Iterable<Order> orders, String assetId) => orders
+  .where((o) => o.status == OrderStatus.pending && o.side == OrderSide.sell && o.assetId == assetId)
+  .fold(0, (sum, o) => sum + o.quantity);

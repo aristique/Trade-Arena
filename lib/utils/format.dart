@@ -1,5 +1,3 @@
-import '../data/mock_data.dart';
-
 // Простые функции форматирования без пакета intl.
 // Формат как в русской локали: пробел между разрядами, запятая в дробной части.
 
@@ -60,9 +58,10 @@ String formatDateTime(DateTime d) =>
 /// "14 сен 2026"
 String formatDate(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
 
-/// "5 мин назад", "3 ч назад", "2 дн назад" относительно mockNow
-String timeAgo(DateTime d) {
-  final diff = mockNow.difference(d);
+/// Относительное время, без зависимости от источника данных.
+String timeAgo(DateTime d, {DateTime? now}) {
+  final diff = (now ?? DateTime.now()).difference(d);
+  if (diff.isNegative || diff.inMinutes == 0) return 'только что';
   if (diff.inMinutes < 60) return '${diff.inMinutes} мин назад';
   if (diff.inHours < 24) return '${diff.inHours} ч назад';
   return '${diff.inDays} дн назад';
