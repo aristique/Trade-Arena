@@ -61,7 +61,11 @@ class _OrderScreenState extends State<OrderScreen> {
         limit.isFinite &&
         limit >= 0.01 &&
         limit <= 1000000000) {
-      return money(limit);
+      final rounded = money(limit);
+      final executes = _side == OrderSide.buy
+          ? asset.lastPrice <= rounded
+          : asset.lastPrice >= rounded;
+      return executes ? asset.lastPrice : rounded;
     }
     return asset.lastPrice;
   }
@@ -283,7 +287,7 @@ class _OrderScreenState extends State<OrderScreen> {
                           children: [
                             _SummaryRow(
                               label: isLimit
-                                  ? 'Лимитная цена'
+                                  ? 'Цена для расчёта'
                                   : 'Цена за акцию',
                               value: formatMoney(_price(asset)),
                             ),

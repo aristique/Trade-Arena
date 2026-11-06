@@ -122,6 +122,7 @@ class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
+          fontFamily: 'Roboto',
           fontSize: 22,
           fontWeight: FontWeight.w700,
           color: scheme.onSurface,

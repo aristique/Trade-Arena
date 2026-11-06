@@ -30,6 +30,7 @@ class PriceChangeBadge extends StatelessWidget {
     final label = Text(
       text,
       style: TextStyle(
+        fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
         color: filled
             ? (isUp ? colors.onGain : colors.onLoss)
             : (isUp ? colors.gain : colors.loss),

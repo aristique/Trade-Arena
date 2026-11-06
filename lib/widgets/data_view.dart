@@ -55,11 +55,16 @@ class DataScreen extends StatelessWidget {
   final Widget Function(BuildContext, TradingModel) builder;
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(title), actions: [
-      IconButton(tooltip: 'Обновить данные',
-        onPressed: () => context.read<TradingModel>().load(),
-        icon: const Icon(Icons.refresh)),
-    ]),
+    appBar: AppBar(
+      title: Text(title),
+      actions: [
+        IconButton(
+          tooltip: 'Обновить данные',
+          onPressed: () => context.read<TradingModel>().load(),
+          icon: const Icon(Icons.refresh),
+        ),
+      ],
+    ),
     body: DataView(builder: builder),
   );
 }

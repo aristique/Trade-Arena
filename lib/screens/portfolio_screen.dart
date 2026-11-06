@@ -25,31 +25,43 @@ class PortfolioScreen extends StatelessWidget {
         return DefaultTabController(
           length: 2,
           child: Scaffold(
-            appBar: AppBar(title: const Text('Портфель'), actions: [
-              IconButton(tooltip: 'Обновить данные', onPressed: () => model.load(),
-                icon: const Icon(Icons.refresh)),
-            ]),
+            appBar: AppBar(
+              title: const Text('Портфель'),
+              actions: [
+                IconButton(
+                  tooltip: 'Обновить данные',
+                  onPressed: () => model.load(),
+                  icon: const Icon(Icons.refresh),
+                ),
+              ],
+            ),
             // NestedScrollView: сводка прокручивается, а вкладки остаются сверху
             body: NestedScrollView(
               headerSliverBuilder: (context, innerBoxIsScrolled) => [
                 const SliverToBoxAdapter(child: _Summary()),
-                SliverAppBar(
-                  pinned: true,
-                  primary: false,
-                  automaticallyImplyLeading: false,
-                  toolbarHeight: 0,
-                  bottom: TabBar(
-                    tabs: [
-                      Tab(text: 'Позиции · ${positions.length}'),
-                      Tab(text: 'Ордера · ${orders.length}'),
-                    ],
+                SliverOverlapAbsorber(
+                  handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
+                    context,
+                  ),
+                  sliver: SliverAppBar(
+                    pinned: true,
+                    primary: false,
+                    automaticallyImplyLeading: false,
+                    toolbarHeight: 0,
+                    bottom: TabBar(
+                      tabs: [
+                        Tab(text: 'Позиции · ${positions.length}'),
+                        Tab(text: 'Ордера · ${orders.length}'),
+                      ],
+                    ),
                   ),
                 ),
               ],
               body: TabBarView(
                 children: [
-                  positions.isEmpty ? const Center(child: Text('Пока нет позиций')) : ListView.separated(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  _PortfolioList(
+                    name: 'positions',
+                    emptyMessage: 'Пока нет позиций',
                     itemCount: positions.length,
                     separatorBuilder: (context, index) =>
                         const Divider(indent: 72),
@@ -68,8 +80,9 @@ class PortfolioScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  orders.isEmpty ? const Center(child: Text('Пока нет ордеров')) : ListView.separated(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  _PortfolioList(
+                    name: 'orders',
+                    emptyMessage: 'Пока нет ордеров',
                     itemCount: orders.length,
                     separatorBuilder: (context, index) =>
                         const Divider(indent: 72),
@@ -86,6 +99,47 @@ class PortfolioScreen extends StatelessWidget {
       },
     );
   }
+}
+
+/// Компенсирует закреплённую TabBar, чтобы первая строка оставалась доступной
+/// после прокрутки сводки и переключения между позициями и ордерами.
+class _PortfolioList extends StatelessWidget {
+  const _PortfolioList({
+    required this.name,
+    required this.emptyMessage,
+    required this.itemCount,
+    required this.itemBuilder,
+    required this.separatorBuilder,
+  });
+  final String name;
+  final String emptyMessage;
+  final int itemCount;
+  final IndexedWidgetBuilder itemBuilder;
+  final IndexedWidgetBuilder separatorBuilder;
+
+  @override
+  Widget build(BuildContext context) => CustomScrollView(
+    key: PageStorageKey(name),
+    slivers: [
+      SliverOverlapInjector(
+        handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+      ),
+      if (itemCount == 0)
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(child: Text(emptyMessage)),
+        )
+      else
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          sliver: SliverList.separated(
+            itemCount: itemCount,
+            itemBuilder: itemBuilder,
+            separatorBuilder: separatorBuilder,
+          ),
+        ),
+    ],
+  );
 }
 
 /// Верхняя часть: стоимость, доходность, деньги и распределение по рынкам.

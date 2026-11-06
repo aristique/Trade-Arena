@@ -142,7 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: StatTile(
                         label: 'Лучшая сделка',
                         value: best == null
-                            ? 'Нет продаж'
+                              ? 'Нет данных'
                             : '${model.byId(best.assetId)!.symbol} ${formatSignedMoney(best.realizedProfit!)}',
                         valueColor: colors.gain,
                       ),

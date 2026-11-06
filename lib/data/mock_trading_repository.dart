@@ -32,10 +32,11 @@ class MockTradingRepository implements TradingRepository {
         if (o.status == OrderStatus.pending &&
             !o.untilCancelled &&
             DateTime(
-              o.createdAt.year,
-              o.createdAt.month,
-              o.createdAt.day + 1,
-            ).isAfter(now) == false)
+                  o.createdAt.year,
+                  o.createdAt.month,
+                  o.createdAt.day + 1,
+                ).isAfter(now) ==
+                false)
           o.cancelled()
         else
           o,
