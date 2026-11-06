@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../data/mock_data.dart';
+import 'package:provider/provider.dart';
+
+import '../models/trading_model.dart';
+import '../widgets/data_view.dart';
 import '../data/models.dart';
 import '../utils/format.dart';
 import '../widgets/price_change_badge.dart';
@@ -15,57 +18,72 @@ class PortfolioScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Портфель')),
-        // NestedScrollView: сводка прокручивается, а вкладки остаются сверху
-        body: NestedScrollView(
-          headerSliverBuilder: (context, innerBoxIsScrolled) => [
-            const SliverToBoxAdapter(child: _Summary()),
-            SliverAppBar(
-              pinned: true,
-              primary: false,
-              automaticallyImplyLeading: false,
-              toolbarHeight: 0,
-              bottom: TabBar(
-                tabs: [
-                  Tab(text: 'Позиции · ${positions.length}'),
-                  Tab(text: 'Ордера · ${orders.length}'),
+    return DataView(
+      builder: (context, model) {
+        final positions = model.positions;
+        final orders = model.orders;
+        return DefaultTabController(
+          length: 2,
+          child: Scaffold(
+            appBar: AppBar(title: const Text('Портфель'), actions: [
+              IconButton(tooltip: 'Обновить данные', onPressed: () => model.load(),
+                icon: const Icon(Icons.refresh)),
+            ]),
+            // NestedScrollView: сводка прокручивается, а вкладки остаются сверху
+            body: NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                const SliverToBoxAdapter(child: _Summary()),
+                SliverAppBar(
+                  pinned: true,
+                  primary: false,
+                  automaticallyImplyLeading: false,
+                  toolbarHeight: 0,
+                  bottom: TabBar(
+                    tabs: [
+                      Tab(text: 'Позиции · ${positions.length}'),
+                      Tab(text: 'Ордера · ${orders.length}'),
+                    ],
+                  ),
+                ),
+              ],
+              body: TabBarView(
+                children: [
+                  positions.isEmpty ? const Center(child: Text('Пока нет позиций')) : ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: positions.length,
+                    separatorBuilder: (context, index) =>
+                        const Divider(indent: 72),
+                    itemBuilder: (context, index) {
+                      final position = positions[index];
+                      final asset = model.byId(position.assetId)!;
+                      return StockTile(
+                        key: ValueKey(position.id),
+                        asset: asset,
+                        subtitle:
+                            '${position.quantity} шт. · ср. ${formatMoney(position.avgPrice)}',
+                        value: position.quantity * asset.lastPrice,
+                        changePct:
+                            (asset.lastPrice / position.avgPrice - 1) * 100,
+                        onTap: () => context.push('/portfolio/${asset.id}'),
+                      );
+                    },
+                  ),
+                  orders.isEmpty ? const Center(child: Text('Пока нет ордеров')) : ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: orders.length,
+                    separatorBuilder: (context, index) =>
+                        const Divider(indent: 72),
+                    itemBuilder: (context, index) => _OrderTile(
+                      key: ValueKey(orders[index].id),
+                      order: orders[index],
+                    ),
+                  ),
                 ],
               ),
             ),
-          ],
-          body: TabBarView(
-            children: [
-              ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: positions.length,
-                separatorBuilder: (context, index) => const Divider(indent: 72),
-                itemBuilder: (context, index) {
-                  final position = positions[index];
-                  final asset = assetById(position.assetId);
-                  return StockTile(
-                    asset: asset,
-                    subtitle:
-                        '${position.quantity} шт. · ср. ${formatMoney(position.avgPrice)}',
-                    value: position.quantity * asset.lastPrice,
-                    changePct: (asset.lastPrice / position.avgPrice - 1) * 100,
-                    onTap: () => context.push('/portfolio/${asset.id}'),
-                  );
-                },
-              ),
-              ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: orders.length,
-                separatorBuilder: (context, index) => const Divider(indent: 72),
-                itemBuilder: (context, index) =>
-                    _OrderTile(order: orders[index]),
-              ),
-            ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -76,6 +94,13 @@ class _Summary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final model = context.watch<TradingModel>();
+    final positions = model.positions;
+    final portfolio = model.portfolio;
+    final totalValue = model.totalValue;
+    final totalReturnPct = model.totalReturnPct;
+    final positionsValue = model.positionsValue;
+    Asset assetById(String id) => model.byId(id)!;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -144,7 +169,10 @@ class _Summary extends StatelessWidget {
                       Expanded(
                         child: StatTile(
                           label: 'Свободные средства',
-                          value: formatMoney(portfolio.cashBalance),
+                          value: formatMoney(model.availableCash),
+                          trailing: Text(
+                            'В резерве: ${formatMoney(reservedCash(model.orders))}',
+                          ),
                         ),
                       ),
                       Expanded(
@@ -246,7 +274,7 @@ class _Legend extends StatelessWidget {
 
 /// Строка ордера: операция, тип, количество, цена и статус.
 class _OrderTile extends StatelessWidget {
-  const _OrderTile({required this.order});
+  const _OrderTile({super.key, required this.order});
 
   final Order order;
 
@@ -254,7 +282,8 @@ class _OrderTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final asset = assetById(order.assetId);
+    final model = context.watch<TradingModel>();
+    final asset = model.byId(order.assetId)!;
 
     final sideText = order.side == OrderSide.buy ? 'Покупка' : 'Продажа';
     final typeText = order.type == OrderType.market ? 'Рыночный' : 'Лимитный';
@@ -263,7 +292,7 @@ class _OrderTile extends StatelessWidget {
 
     // Отменить можно только ожидающий ордер
     return InkWell(
-      onTap: order.status == OrderStatus.pending
+      onTap: order.status == OrderStatus.pending && !model.isSaving
           ? () => _cancel(context)
           : null,
       child: Padding(
@@ -315,7 +344,7 @@ class _OrderTile extends StatelessWidget {
   }
 
   Future<void> _cancel(BuildContext context) async {
-    final asset = assetById(order.assetId);
+    final asset = context.read<TradingModel>().byId(order.assetId)!;
     final action = order.side == OrderSide.buy ? 'покупку' : 'продажу';
     final ok = await showDialog<bool>(
       context: context,
@@ -341,12 +370,14 @@ class _OrderTile extends StatelessWidget {
         ],
       ),
     );
-    // Статус в списке поменяется на L4, когда появится общее состояние
     if (ok == true && context.mounted) {
+      final error = await context.read<TradingModel>().cancel(order.id);
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Ордер на $action ${order.quantity} ${asset.symbol} отменён',
+            error ??
+                'Ордер на $action ${order.quantity} ${asset.symbol} отменён',
           ),
         ),
       );
