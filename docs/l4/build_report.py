@@ -369,8 +369,8 @@ def build(reference_path, output):
       'позиции и ордера удалены. Счётчик ожидающих заявок исчезает; рейтинг и новости '
       'также читают новое состояние. Пустой список показывает понятное сообщение.')
     sub('Автоматические проверки')
-    p('Выполнены 19 тестов: 16 проверок Repository и модели, два пользовательских сценария '
-      'через интерфейс и проверка запуска. Покрыты комиссии, средняя стоимость, полная продажа, '
+    p('Выполнен 21 тест: 16 проверок Repository и модели, два пользовательских сценария '
+      'через интерфейс, проверка запуска и две проверки шрифтов кнопок. Покрыты комиссии, средняя стоимость, полная продажа, '
       'резервы, выгодный лимит, CRUD, сброс, аварии всех методов, неизменяемость снимков, '
       'параллельные заявки, истечение дневного ордера, retry и неизвестный id.')
     p('Снимки отчёта получены настоящим рендером Flutter в widget-тестах при размере '
@@ -386,7 +386,7 @@ def build(reference_path, output):
     log = subprocess.check_output(['git', '-c', 'i18n.logOutputEncoding=utf-8', 'log', '--oneline'], cwd=ROOT, encoding='utf-8')
     # Keep each entry on a page; wrap long messages with the same mono styling.
     for line in log.splitlines():
-        story.append(Paragraph(rich(line, 'mono'), style('history', fontSize=7.6, leading=10.1, spaceAfter=2)))
+        story.append(Paragraph(rich(line, 'mono'), style('history', fontSize=7.6, leading=10.1, spaceAfter=1)))
     page()
     h('8. Вывод')
     p('В TradeArena реализовано общее состояние на Provider и ChangeNotifier, интерфейс '
