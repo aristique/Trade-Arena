@@ -111,6 +111,8 @@ class AppTheme {
       // fidelity сохраняет насыщенность seed-цвета (по умолчанию он бледнеет)
       dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
     );
+    final buttonTextStyle = ThemeData(colorScheme: scheme).textTheme.labelLarge
+        ?.copyWith(fontSize: 16, fontWeight: FontWeight.w600);
 
     return ThemeData(
       colorScheme: scheme,
@@ -150,13 +152,13 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: buttonTextStyle,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: buttonTextStyle,
         ),
       ),
       dividerTheme: DividerThemeData(
