@@ -60,8 +60,8 @@ Future<void> requestDone(WidgetTester tester) async {
 
 void main() {
   setUpAll(() async {
-    if (!capture) return;
-    // Для отчёта загружаются настоящие шрифты вместо тестового Ahem.
+    // UI проверяется с настоящими шрифтами и без сохранения снимков.
+    // Иначе Ahem меняет размеры текста и даёт ложные ошибки вёрстки.
     final config = File('.dart_tool/package_config.json').readAsStringSync();
     final sdk = RegExp(r'file:///([^"\n]+?)/packages/flutter"')
         .firstMatch(config)
