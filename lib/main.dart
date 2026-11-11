@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'data/mock_trading_repository.dart';
 import 'data/trading_repository.dart';
 import 'models/trading_model.dart';
-
 import 'router.dart';
 import 'theme/app_theme.dart';
 

@@ -124,7 +124,7 @@ class MockTradingRepository implements TradingRepository {
     return _place(draft);
   }
 
-  /// До изменения списков проверяем ВСЕ условия. Между проверкой и записью
+  /// До изменения списков проверяем все условия. Между проверкой и записью
   /// нет await: две параллельные заявки не могут потратить одни деньги.
   Result<TradingSnapshot> _place(OrderDraft draft, {Order? replacing}) {
     final matches = seed.assets.where((a) => a.id == draft.assetId);

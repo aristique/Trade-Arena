@@ -2,10 +2,10 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../widgets/data_view.dart';
 import '../data/models.dart';
 import '../theme/app_theme.dart';
 import '../utils/format.dart';
+import '../widgets/data_view.dart';
 import '../widgets/news_card.dart';
 import '../widgets/price_change_badge.dart';
 import '../widgets/stat_tile.dart';

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../data/models.dart';
-import '../widgets/data_view.dart';
 import '../utils/format.dart';
+import '../widgets/data_view.dart';
 import '../widgets/price_change_badge.dart';
 import '../widgets/ticker_avatar.dart';
 

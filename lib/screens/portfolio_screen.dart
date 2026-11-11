@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:provider/provider.dart';
 
-import '../models/trading_model.dart';
-import '../widgets/data_view.dart';
 import '../data/models.dart';
+import '../models/trading_model.dart';
 import '../utils/format.dart';
+import '../widgets/data_view.dart';
 import '../widgets/price_change_badge.dart';
 import '../widgets/stat_tile.dart';
 import '../widgets/stock_tile.dart';

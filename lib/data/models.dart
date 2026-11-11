@@ -138,13 +138,13 @@ class NewsArticle {
   final String summary;
   final String url;
   final String source;
-  final String? imageUrl; // на L2 картинки не загружаем
+  final String? imageUrl; // необязательная иллюстрация к новости
   final DateTime publishedAt;
   final Market market;
   final List<String> symbols;
 }
 
-/// Участник рейтинга. На L2 — просто готовый список.
+/// Участник рейтинга по доходности.
 class Participant {
   const Participant({
     required this.rank,

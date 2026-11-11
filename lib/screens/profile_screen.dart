@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:provider/provider.dart';
 
 import '../data/mock_trading_repository.dart';
 import '../models/trading_model.dart';
-import '../widgets/data_view.dart';
 import '../theme/app_theme.dart';
 import '../utils/format.dart';
+import '../widgets/data_view.dart';
 import '../widgets/stat_tile.dart';
 import '../widgets/ticker_avatar.dart';
 
@@ -142,7 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: StatTile(
                         label: 'Лучшая сделка',
                         value: best == null
-                              ? 'Нет данных'
+                            ? 'Нет данных'
                             : '${model.byId(best.assetId)!.symbol} ${formatSignedMoney(best.realizedProfit!)}',
                         valueColor: colors.gain,
                       ),
