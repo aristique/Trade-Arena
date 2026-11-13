@@ -9,6 +9,7 @@ import 'package:shelf/shelf.dart';
 
 import 'db.dart';
 import 'errors.dart';
+import 'trading/schema.dart';
 
 /// Secret used to sign JWTs. Override with the JWT_SECRET env variable.
 final String jwtSecret =
@@ -35,12 +36,21 @@ Future<Response> register(Request request) async {
   final existing = db.select('SELECT id FROM users WHERE email = ?', [email]);
   if (existing.isNotEmpty) return emailTaken();
 
-  db.execute(
-    'INSERT INTO users (email, password_hash, name, created_at) '
-    'VALUES (?, ?, ?, ?)',
-    [email, hashPassword(password), name, nowIso()],
-  );
-  final id = db.lastInsertRowId;
+  final passwordHash = hashPassword(password);
+  final id = transaction(db, () {
+    final createdAt = nowIso();
+    db.execute(
+      'INSERT INTO users (email, password_hash, name, created_at) VALUES (?, ?, ?, ?)',
+      [email, passwordHash, name, createdAt],
+    );
+    final id = db.lastInsertRowId;
+    db.execute(
+      'INSERT INTO portfolios (user_id, cash_cents, starting_cents, created_at) '
+      'VALUES (?, 1000000, 1000000, ?)',
+      [id, createdAt],
+    );
+    return id;
+  });
 
   return jsonResponse({
     'token': issueToken(id),

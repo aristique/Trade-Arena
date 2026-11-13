@@ -5,6 +5,8 @@
 
 import 'package:sqlite3/sqlite3.dart';
 
+import 'trading/schema.dart';
+
 /// The single database connection, opened once at startup by [initDb].
 late final Database db;
 
@@ -38,6 +40,7 @@ void initDb(String path) {
       created_at TEXT    NOT NULL
     );
   ''');
+  initTradingSchema(db);
 }
 
 /// Current UTC time in ISO-8601, the format used for all timestamps.
