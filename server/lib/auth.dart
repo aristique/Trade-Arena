@@ -9,8 +9,8 @@ Future<Response> register(Request request) async {
   final body = await readJsonBody(request);
   if (body == null) return validationError('Body must be a JSON object');
 
-  final email = stringField(body, 'email');
-  final password = stringField(body, 'password');
+  final email = stringField(body, 'email')?.toLowerCase();
+  final password = _password(body);
   final name = stringField(body, 'name');
   if (email == null || !email.contains('@')) {
     return validationError('A valid email is required');
@@ -18,7 +18,10 @@ Future<Response> register(Request request) async {
   if (password == null) return validationError('password is required');
   if (name == null) return validationError('name is required');
 
-  final existing = db.select('SELECT id FROM users WHERE email = ?', [email]);
+  final existing = db.select(
+    'SELECT id FROM users WHERE email = ? COLLATE NOCASE',
+    [email],
+  );
   if (existing.isNotEmpty) return emailTaken();
 
   final passwordHash = hashPassword(password);
@@ -45,13 +48,15 @@ Future<Response> register(Request request) async {
 
 Future<Response> login(Request request) async {
   final body = await readJsonBody(request);
-  final email = body == null ? null : stringField(body, 'email');
-  final password = body == null ? null : stringField(body, 'password');
+  final email = body == null ? null : stringField(body, 'email')?.toLowerCase();
+  final password = body == null ? null : _password(body);
   if (email == null || password == null) {
     return unauthorized('Invalid email or password');
   }
 
-  final rows = db.select('SELECT * FROM users WHERE email = ?', [email]);
+  final rows = db.select('SELECT * FROM users WHERE email = ? COLLATE NOCASE', [
+    email,
+  ]);
   if (rows.isEmpty) return unauthorized('Invalid email or password');
 
   final user = rows.first;
@@ -87,3 +92,8 @@ Handler requireAuth(Handler inner) => (Request request) {
 };
 
 int currentUserId(Request request) => request.context['userId'] as int;
+
+String? _password(Map<String, dynamic> body) {
+  final value = body['password'];
+  return value is String && value.isNotEmpty ? value : null;
+}

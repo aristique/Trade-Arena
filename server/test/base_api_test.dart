@@ -40,6 +40,45 @@ void main() {
   Future<Map<String, dynamic>> json(Response response) async =>
       jsonDecode(await response.readAsString()) as Map<String, dynamic>;
 
+  test(
+    'Пробелы в пароле сохраняются, регистр email не меняет аккаунт',
+    () async {
+      const account = {
+        'email': 'MixedCase@example.com',
+        'password': ' password123 ',
+        'name': 'Case',
+      };
+      expect(
+        (await call('POST', '/auth/register', body: account)).statusCode,
+        201,
+      );
+      expect(
+        (await call(
+          'POST',
+          '/auth/register',
+          body: {...account, 'email': 'mixedcase@example.com'},
+        )).statusCode,
+        409,
+      );
+      expect(
+        (await call(
+          'POST',
+          '/auth/login',
+          body: {...account, 'email': 'MIXEDCASE@example.com'},
+        )).statusCode,
+        200,
+      );
+      expect(
+        (await call(
+          'POST',
+          '/auth/login',
+          body: {...account, 'password': 'password123'},
+        )).statusCode,
+        401,
+      );
+    },
+  );
+
   test('Авторизация, CRUD заметок и изоляция пользователей', () async {
     expect((await call('GET', '/health')).statusCode, 200);
     expect((await call('GET', '/me')).statusCode, 401);
