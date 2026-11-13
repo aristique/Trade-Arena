@@ -2,9 +2,11 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
 import 'auth.dart';
+import 'db.dart';
 import 'errors.dart';
 import 'files.dart';
 import 'notes.dart';
+import 'trading/trading_routes.dart';
 
 Handler createHandler() {
   final router = Router(notFoundHandler: (_) => notFound('Route not found'))
@@ -18,7 +20,8 @@ Handler createHandler() {
     ..put('/notes/<id>', requireAuth(updateNote))
     ..delete('/notes/<id>', requireAuth(deleteNote))
     ..post('/files', requireAuth(uploadFile))
-    ..get('/files/<id>', downloadFile);
+    ..get('/files/<id>', downloadFile)
+    ..mount('/', TradingRoutes(db).handler);
   return const Pipeline().addMiddleware(_cors).addHandler(router.call);
 }
 
