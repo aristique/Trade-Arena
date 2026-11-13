@@ -1,7 +1,8 @@
 import 'mock_data.dart' as seed;
-import 'models.dart';
-import 'result.dart';
-import 'trading_repository.dart';
+
+import 'package:trade_arena/data/models.dart';
+import 'package:trade_arena/data/result.dart';
+import 'package:trade_arena/data/trading_repository.dart';
 
 /// Только этот файл знает исходные данные. На L5 заменяется реализацией HTTP.
 class MockTradingRepository implements TradingRepository {

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../models/auth_model.dart';
 import '../utils/validators.dart';
 
-/// Регистрация. Аккаунт пока никуда не сохраняется (это L5),
-/// но все поля проверяются.
+/// Регистрация аккаунта и отдельного торгового счёта.
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -28,8 +29,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    final error = await context.read<AuthModel>().register(
+      _nameCtrl.text,
+      _emailCtrl.text,
+      _passwordCtrl.text,
+    );
+    if (!mounted) return;
+    if (error != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Аккаунт создан, добро пожаловать!')),
     );
@@ -42,6 +54,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final busy = context.watch<AuthModel>().isBusy;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Регистрация')),
@@ -105,7 +118,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _repeatCtrl,
                   obscureText: true,
                   textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _submit(),
+                  onFieldSubmitted: (_) {
+                    if (!busy) _submit();
+                  },
                   decoration: const InputDecoration(
                     labelText: 'Повторите пароль',
                     prefixIcon: Icon(Icons.lock_outline),
@@ -117,12 +132,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 32),
                 FilledButton(
-                  onPressed: _submit,
-                  child: const Text('Создать аккаунт'),
+                  onPressed: busy ? null : _submit,
+                  child: busy
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Создать аккаунт'),
                 ),
                 const SizedBox(height: 12),
                 TextButton(
-                  onPressed: () => context.pop(),
+                  onPressed: busy ? null : () => context.pop(),
                   child: const Text('Уже есть аккаунт? Войти'),
                 ),
               ],

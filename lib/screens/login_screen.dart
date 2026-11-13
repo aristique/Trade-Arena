@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../models/auth_model.dart';
 import '../utils/validators.dart';
 
-/// Экран входа с проверкой полей.
-/// Настоящей авторизации пока нет: входит любой, кто прошёл проверку.
+/// Вход с проверкой полей и серверной авторизацией.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -25,9 +26,19 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _submit() {
-    if (!_formKey.currentState!.validate()) return; // ошибки уже под полями
-    context.go('/market'); // go, а не push: экран входа уходит из стека
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    final error = await context.read<AuthModel>().login(
+      _emailCtrl.text,
+      _passwordCtrl.text,
+    );
+    if (!mounted) return;
+    if (error != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+    context.go('/market');
   }
 
   // Письмо не отправляется, только сообщаем пользователю
@@ -35,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailCtrl.text.trim();
     final message = email.isEmpty
         ? 'Сначала введите email'
-        : 'Ссылка для восстановления отправлена на $email';
+        : 'Восстановление пароля пока недоступно';
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
   }
@@ -44,6 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final busy = context.watch<AuthModel>().isBusy;
 
     return Scaffold(
       body: SafeArea(
@@ -103,7 +115,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _passwordCtrl,
                   obscureText: _obscure,
                   textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _submit(),
+                  onFieldSubmitted: (_) {
+                    if (!busy) _submit();
+                  },
                   validator: validatePassword,
                   decoration: InputDecoration(
                     labelText: 'Пароль',
@@ -126,10 +140,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                FilledButton(onPressed: _submit, child: const Text('Войти')),
+                FilledButton(
+                  onPressed: busy ? null : _submit,
+                  child: busy
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Войти'),
+                ),
                 const SizedBox(height: 12),
                 TextButton(
-                  onPressed: () => context.push('/register'),
+                  onPressed: busy ? null : () => context.push('/register'),
                   child: const Text('Нет аккаунта? Зарегистрируйтесь'),
                 ),
               ],

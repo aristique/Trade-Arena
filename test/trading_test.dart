@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:trade_arena/data/mock_trading_repository.dart';
+
+import 'support/mock_trading_repository.dart';
+
 import 'package:trade_arena/data/models.dart';
 import 'package:trade_arena/data/result.dart';
 import 'package:trade_arena/models/trading_model.dart';

@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import 'data/models.dart';
+import 'models/auth_model.dart';
 import 'screens/leaderboard_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/market_screen.dart';
@@ -12,10 +13,20 @@ import 'screens/register_screen.dart';
 import 'screens/stock_detail_screen.dart';
 import 'widgets/app_shell.dart';
 
-// Карта приложения: у каждого экрана свой адрес.
-// Роутер создаётся один раз, поэтому после изменений здесь нужен restart (R).
-final router = GoRouter(
+final router = createRouter();
+
+GoRouter createRouter({AuthModel? auth}) => GoRouter(
   initialLocation: '/login',
+  refreshListenable: auth,
+  redirect: (context, state) {
+    if (auth == null) return null;
+    final authPage =
+        state.matchedLocation == '/login' ||
+        state.matchedLocation == '/register';
+    if (!auth.isAuthenticated && !authPage) return '/login';
+    if (auth.isAuthenticated && authPage) return '/market';
+    return null;
+  },
   routes: [
     // Вход и регистрация вне вкладок, поэтому на них нет нижней панели
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),

@@ -7,7 +7,9 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import 'package:trade_arena/data/mock_trading_repository.dart';
+
+import 'support/mock_trading_repository.dart';
+
 import 'package:trade_arena/data/trading_repository.dart';
 import 'package:trade_arena/main.dart';
 import 'package:trade_arena/models/trading_model.dart';
@@ -196,14 +198,11 @@ void main() {
     router.go('/profile');
     await tester.pumpAndSettle();
     await screenshot(tester, '14_profile');
-    await tester.tap(find.text('Симулировать сбой сети'));
-    await tester.pumpAndSettle();
-    expect(repo.simulateError, isTrue);
+    repo.simulateError = true;
     await tester.tap(find.byTooltip('Обновить данные'));
     await requestDone(tester);
     expect(find.text('Повторить'), findsOneWidget);
-    await tester.tap(find.text('Симулировать сбой сети'));
-    await tester.pumpAndSettle();
+    repo.simulateError = false;
     await tester.tap(find.text('Повторить'));
     await requestDone(tester);
     await tester.ensureVisible(find.text('Сбросить портфель'));

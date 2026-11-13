@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../data/mock_trading_repository.dart';
+import '../models/auth_model.dart';
 import '../models/trading_model.dart';
 import '../theme/app_theme.dart';
 import '../utils/format.dart';
@@ -19,14 +18,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool _simulateError = false;
   bool _notifications = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _simulateError = context.read<MockTradingRepository>().simulateError;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,19 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          SwitchListTile(
-            title: const Text('Симулировать сбой сети'),
-            value: _simulateError,
-            onChanged: (value) {
-              setState(() => _simulateError = value);
-              context.read<MockTradingRepository>().simulateError = value;
-            },
-          ),
-          Expanded(child: DataView(builder: _buildContent)),
-        ],
-      ),
+      body: DataView(builder: _buildContent),
     );
   }
 
@@ -229,7 +209,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
     // ok == true, а не ok!: если закрыть диалог тапом мимо, придёт null
     if (ok == true && context.mounted) {
-      context.go('/login'); // go: вкладки уходят из стека
+      await context.read<AuthModel>().logout();
     }
   }
 

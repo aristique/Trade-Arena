@@ -1,4 +1,4 @@
-import 'models.dart';
+import 'package:trade_arena/data/models.dart';
 
 // Начальные данные для MockTradingRepository.
 
