@@ -1,0 +1,792 @@
+openapi: 3.0.3
+info:
+  title: TradeArena API
+  version: 1.0.0
+  description: 'Учебный сервер PAM на Dart/Shelf. JWT HS256 действует 7 дней. Денежные
+    ответы в USD. Начальный баланс 10000 USD, позиции и ордера пустые. Котировки фиксированы
+    из L4; внешние цены, валютные курсы и новости будут подключены отдельно. news
+    и priceHistory в снимке пока пустые. Все даты UTC; дневные заявки истекают в 00:00
+    UTC при следующем обращении к торговым данным. Комиссия 0.1% с округлением до
+    цента. DELETE /orders возвращает 200 и снимок, DELETE /notes — 204 без тела. Ошибки:
+    VALIDATION_ERROR, UNAUTHORIZED, NOT_FOUND, EMAIL_TAKEN, INSUFFICIENT_FUNDS, INSUFFICIENT_SHARES,
+    ORDER_NOT_PENDING.'
+servers:
+- url: http://localhost:8080
+- url: http://10.0.2.2:8080
+  description: Android Emulator
+paths:
+  /health:
+    get:
+      summary: Состояние сервера
+      security: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                properties:
+                  status: &id002
+                    type: string
+  /auth/register:
+    post:
+      summary: Регистрация и портфель на 10000 USD
+      security: []
+      responses:
+        '201':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Auth'
+        '400': &id003
+          description: Некорректные данные или недостаточно средств/акций
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409': &id010
+          description: EMAIL_TAKEN или ORDER_NOT_PENDING
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Register'
+  /auth/login:
+    post:
+      summary: Вход
+      security: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Auth'
+        '401': &id001
+          description: Нет действительного Bearer-токена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+  /me:
+    get:
+      summary: Текущий пользователь
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401': *id001
+  /notes:
+    get:
+      summary: Свои заметки с поиском по заголовку и содержимому
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotePage'
+        '401': *id001
+      parameters: &id009
+      - &id006
+        name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+      - &id007
+        name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+      - &id008
+        name: search
+        in: query
+        schema: *id002
+    post:
+      summary: Создать заметку
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        '400': *id003
+        '401': *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteInput'
+  /notes/{id}:
+    get:
+      summary: Получить свою заметку
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        '401': *id001
+        '404': &id004
+          description: Объект отсутствует или принадлежит другому пользователю
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters: &id005
+      - name: id
+        in: path
+        required: true
+        schema: *id002
+    put:
+      summary: Изменить свою заметку
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+        '400': *id003
+        '401': *id001
+        '404': *id004
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteInput'
+      parameters: *id005
+    delete:
+      summary: Удалить свою заметку
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: Удалено, тело ответа пустое
+        '401': *id001
+        '404': *id004
+      parameters: *id005
+  /files:
+    post:
+      summary: Загрузить файл до 5 МиБ
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadedFile'
+        '400': *id003
+        '401': *id001
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+  /files/{id}:
+    get:
+      summary: Скачать файл
+      security: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404': *id004
+      parameters: *id005
+  /trading/snapshot:
+    get:
+      summary: Согласованный снимок текущего пользователя
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snapshot'
+        '401': *id001
+  /assets:
+    get:
+      summary: Каталог с поиском и фильтрами
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetPage'
+        '401': *id001
+      parameters:
+      - *id006
+      - *id007
+      - *id008
+      - name: market
+        in: query
+        schema: *id002
+      - name: sector
+        in: query
+        schema: *id002
+  /assets/{id}:
+    get:
+      summary: Акция по идентификатору
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+        '401': *id001
+        '404': *id004
+      parameters: *id005
+  /portfolio:
+    get:
+      summary: Свой портфель
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Portfolio'
+        '401': *id001
+  /positions:
+    get:
+      summary: Свои позиции
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Position'
+        '401': *id001
+  /portfolio/reset:
+    post:
+      summary: Сбросить свой портфель и историю
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snapshot'
+        '401': *id001
+  /orders:
+    get:
+      summary: Свои ордера с поиском по тикеру и компании
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderPage'
+        '401': *id001
+      parameters: *id009
+    post:
+      summary: Создать и исполнить либо зарезервировать ордер
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snapshot'
+        '400': *id003
+        '401': *id001
+        '404': *id004
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderInput'
+  /orders/{id}:
+    get:
+      summary: Свой ордер
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '401': *id001
+        '404': *id004
+      parameters: *id005
+    put:
+      summary: Изменить ожидающий ордер
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snapshot'
+        '400': *id003
+        '401': *id001
+        '404': *id004
+        '409': *id010
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderInput'
+      parameters: *id005
+    delete:
+      summary: Отменить ожидающий ордер с сохранением истории
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snapshot'
+        '401': *id001
+        '404': *id004
+        '409': *id010
+      parameters: *id005
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code: *id002
+            message: *id002
+    User:
+      type: object
+      required:
+      - id
+      - email
+      - name
+      properties:
+        id: &id011
+          type: integer
+        email: *id002
+        name: *id002
+    Profile:
+      type: object
+      required:
+      - id
+      - email
+      - name
+      properties:
+        id: *id002
+        email: *id002
+        name: *id002
+    Auth:
+      type: object
+      required:
+      - token
+      - user
+      properties:
+        token: *id002
+        user:
+          $ref: '#/components/schemas/User'
+    Register:
+      type: object
+      required:
+      - email
+      - password
+      - name
+      properties:
+        email:
+          type: string
+          format: email
+        password: *id002
+        name: *id002
+    Login:
+      type: object
+      required:
+      - email
+      - password
+      properties:
+        email: *id002
+        password: *id002
+    NoteInput:
+      type: object
+      required:
+      - title
+      properties:
+        title: *id002
+        content: *id002
+    Note:
+      type: object
+      required:
+      - id
+      - title
+      - content
+      - createdAt
+      properties:
+        id: *id011
+        title: *id002
+        content: *id002
+        createdAt: &id013
+          type: string
+          format: date-time
+    UploadedFile:
+      type: object
+      required:
+      - id
+      - url
+      - name
+      - size
+      - mimeType
+      properties:
+        id: *id011
+        url: *id002
+        name: *id002
+        size: *id011
+        mimeType: *id002
+    Asset:
+      type: object
+      required:
+      - id
+      - symbol
+      - name
+      - market
+      - sector
+      - lastPrice
+      - changePct
+      - updatedAt
+      properties:
+        id: *id002
+        symbol: *id002
+        name: *id002
+        market:
+          type: string
+          enum:
+          - us
+          - india
+          - europe
+        sector: *id002
+        lastPrice: &id012
+          type: number
+        changePct: *id012
+        updatedAt: *id013
+    Portfolio:
+      type: object
+      required:
+      - id
+      - userId
+      - cashBalance
+      - startingBalance
+      - createdAt
+      properties:
+        id: *id002
+        userId: *id002
+        cashBalance: *id012
+        startingBalance: *id012
+        createdAt: *id013
+    Position:
+      type: object
+      required:
+      - id
+      - userId
+      - assetId
+      - quantity
+      - avgPrice
+      properties:
+        id: *id002
+        userId: *id002
+        assetId: *id002
+        quantity: *id011
+        avgPrice: *id012
+    OrderInput:
+      type: object
+      required:
+      - assetId
+      - side
+      - type
+      - quantity
+      properties:
+        assetId: *id002
+        side: &id014
+          type: string
+          enum:
+          - buy
+          - sell
+        type: &id015
+          type: string
+          enum:
+          - market
+          - limit
+        quantity: &id016
+          type: integer
+          minimum: 1
+          maximum: 1000000000
+        limitPrice:
+          type: number
+          minimum: 0.01
+          maximum: 1000000000
+          nullable: true
+          description: Обязательна для limit, игнорируется для market.
+        untilCancelled: &id017
+          type: boolean
+          default: true
+    Participant:
+      type: object
+      required:
+      - rank
+      - name
+      - totalValue
+      - returnPct
+      - tradesCount
+      - isMe
+      properties:
+        rank: *id011
+        name: *id002
+        totalValue: *id012
+        returnPct: *id012
+        tradesCount: *id011
+        isMe:
+          type: boolean
+    NewsArticle:
+      type: object
+      required:
+      - id
+      - title
+      - summary
+      - url
+      - source
+      - imageUrl
+      - publishedAt
+      - market
+      - symbols
+      properties:
+        id: *id002
+        title: *id002
+        summary: *id002
+        url: *id002
+        source: *id002
+        imageUrl:
+          type: string
+          nullable: true
+        publishedAt: *id013
+        market:
+          type: string
+          enum:
+          - us
+          - india
+          - europe
+        symbols:
+          type: array
+          items: *id002
+    Order:
+      type: object
+      required:
+      - id
+      - userId
+      - assetId
+      - side
+      - type
+      - quantity
+      - limitPrice
+      - untilCancelled
+      - executedPrice
+      - fee
+      - status
+      - createdAt
+      - executedAt
+      - realizedProfit
+      properties:
+        id: *id002
+        userId: *id002
+        assetId: *id002
+        side: *id014
+        type: *id015
+        quantity: *id016
+        limitPrice: &id018
+          type: number
+          nullable: true
+        untilCancelled: *id017
+        executedPrice: *id018
+        fee: *id012
+        status:
+          type: string
+          enum:
+          - pending
+          - executed
+          - cancelled
+        createdAt: *id013
+        executedAt:
+          type: string
+          format: date-time
+          nullable: true
+        realizedProfit: *id018
+    Snapshot:
+      type: object
+      required:
+      - user
+      - portfolio
+      - assets
+      - positions
+      - orders
+      - news
+      - participants
+      - asOf
+      - priceHistory
+      properties:
+        user:
+          $ref: '#/components/schemas/Profile'
+        portfolio:
+          $ref: '#/components/schemas/Portfolio'
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Asset'
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Position'
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        news:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewsArticle'
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/Participant'
+        asOf: *id013
+        priceHistory:
+          type: object
+          additionalProperties:
+            type: array
+            items: *id012
+    NotePage:
+      type: object
+      required:
+      - items
+      - page
+      - limit
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Note'
+        page: *id011
+        limit: *id011
+        total: *id011
+    AssetPage:
+      type: object
+      required:
+      - items
+      - page
+      - limit
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Asset'
+        page: *id011
+        limit: *id011
+        total: *id011
+    OrderPage:
+      type: object
+      required:
+      - items
+      - page
+      - limit
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        page: *id011
+        limit: *id011
+        total: *id011
