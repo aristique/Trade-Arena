@@ -52,3 +52,17 @@ gitlog.txt
 
 # Временные рендеры и проверки отчёта
 /tmp/
+
+# Локальные материалы отчётов
+/docs/l4/
+/docs/l5/
+/output/pdf/
+/output/docx/
+
+# Локальное состояние сервера
+/server/.dart_tool/
+/server/build/
+/server/*.db
+/server/*.db-*
+/server/uploads/
+/server/.env
