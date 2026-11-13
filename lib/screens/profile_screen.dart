@@ -27,6 +27,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text('Профиль'),
         actions: [
           IconButton(
+            tooltip: 'Выйти из аккаунта',
+            onPressed: () => _logout(context),
+            icon: const Icon(Icons.logout),
+          ),
+          IconButton(
             tooltip: 'Обновить данные',
             onPressed: () => context.read<TradingModel>().load(),
             icon: const Icon(Icons.refresh),

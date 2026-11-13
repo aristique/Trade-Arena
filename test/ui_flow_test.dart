@@ -202,6 +202,7 @@ void main() {
     await tester.tap(find.byTooltip('Обновить данные'));
     await requestDone(tester);
     expect(find.text('Повторить'), findsOneWidget);
+    expect(find.byTooltip('Выйти из аккаунта'), findsOneWidget);
     repo.simulateError = false;
     await tester.tap(find.text('Повторить'));
     await requestDone(tester);
