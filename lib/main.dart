@@ -32,6 +32,7 @@ Future<void> main() async {
       providers: [
         Provider<ApiClient>(
           create: (_) => api,
+          lazy: false,
           dispose: (_, value) => value.close(),
         ),
         Provider<TradingRepository>(create: (_) => HttpTradingRepository(api)),
