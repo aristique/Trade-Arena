@@ -1,0 +1,19 @@
+name: server
+description: TradeArena API на основе учебного примера PAM.
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  crypto: ^3.0.3
+  shelf: ^1.4.1
+  shelf_multipart: ^2.0.0
+  shelf_router: ^1.1.4
+  sqlite3: ^3.6.0
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.25.0
+  http: ^1.2.0
