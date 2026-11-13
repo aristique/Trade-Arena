@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:server/app.dart';
 import 'package:server/db.dart';
 import 'package:server/files.dart';
+import 'package:server/security.dart';
 import 'package:shelf/shelf.dart';
 import 'package:test/test.dart';
 
@@ -39,6 +40,18 @@ void main() {
   );
   Future<Map<String, dynamic>> json(Response response) async =>
       jsonDecode(await response.readAsString()) as Map<String, dynamic>;
+
+  test(
+    'Токен отсутствующего аккаунта отклоняется до обращения к портфелю',
+    () async {
+      final token = issueToken(999999);
+      expect(
+        (await call('GET', '/trading/snapshot', token: token)).statusCode,
+        401,
+      );
+      expect((await call('GET', '/notes', token: token)).statusCode, 401);
+    },
+  );
 
   test(
     'Пробелы в пароле сохраняются, регистр email не меняет аккаунт',

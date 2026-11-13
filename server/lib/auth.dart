@@ -87,7 +87,10 @@ Handler requireAuth(Handler inner) => (Request request) {
   final header = request.headers['authorization'] ?? '';
   if (!header.startsWith('Bearer ')) return unauthorized();
   final userId = verifyToken(header.substring('Bearer '.length));
-  if (userId == null) return unauthorized();
+  if (userId == null ||
+      db.select('SELECT id FROM users WHERE id = ?', [userId]).isEmpty) {
+    return unauthorized();
+  }
   return inner(request.change(context: {'userId': userId}));
 };
 
